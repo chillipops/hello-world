@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell*)",
+      "Bash(powershell.exe*)",
+      "Bash(pwsh*)",
+      "Bash(pwsh.exe*)",
+      "Bash(winget*)",
+      "Bash(winget.exe*)",
+      "Bash(cmd*)",
+      "Bash(cmd.exe*)",
+      "Bash(taskkill*)",
+      "Bash(tasklist*)",
+      "Bash(wmic*)",
+      "Bash(start*)",
+      "Bash(explorer*)",
+      "Bash(scripts/clear-desktop.ps1*)",
+      "Bash(scripts/install-software.ps1*)",
+      "Bash(scripts/uninstall-software.ps1*)",
+      "Bash(scripts/list-software.ps1*)",
+      "Bash(scripts/open-app.ps1*)",
+      "Bash(scripts/system-info.ps1*)",
+      "Bash(scripts/kill-process.ps1*)"
+    ],
+    "deny": [
+      "Bash(format*)",
+      "Bash(diskpart*)",
+      "Bash(bcdedit*)",
+      "Bash(net user*)",
+      "Bash(reg delete HKLM*)"
+    ]
+  }
+}
