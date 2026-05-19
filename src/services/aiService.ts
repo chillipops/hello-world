@@ -65,7 +65,8 @@ Tags: ${task.tags.join(', ') || 'None'}`,
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 512,
-      thinking: { type: 'adaptive' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      thinking: { type: 'adaptive' } as any,
       messages: [
         {
           role: 'user',
@@ -115,9 +116,15 @@ Tags: ${task.tags.join(', ') || 'None'}`,
       },
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
+    const firstBlock = response.content[0];
+    const text = firstBlock?.type === 'text' ? firstBlock.text : null;
     try {
-      return JSON.parse(text);
+      if (!text) return { hours: 1, confidence: 'low' };
+      const parsed = JSON.parse(text);
+      if (typeof parsed.hours === 'number' && typeof parsed.confidence === 'string') {
+        return parsed;
+      }
+      return { hours: 1, confidence: 'low' };
     } catch {
       return { hours: 1, confidence: 'low' };
     }
@@ -131,7 +138,8 @@ Tags: ${task.tags.join(', ') || 'None'}`,
     const stream = await this.client.messages.stream({
       model: this.model,
       max_tokens: 1024,
-      thinking: { type: 'adaptive' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      thinking: { type: 'adaptive' } as any,
       messages: [
         {
           role: 'user',
