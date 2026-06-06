@@ -18,6 +18,19 @@ system tasks. All destructive actions ask for confirmation before proceeding.
 | "Kill process \<name\>"                         | Terminates a running process                          |
 | "Empty recycle bin"                             | Clears the Recycle Bin                                |
 | "Restart" / "Shut down" / "Sleep"               | Power actions (always asks to confirm)                |
+| "Security scan" / "Defender status"             | Run Windows Defender scan or check its status         |
+| "Check firewall"                                | Show firewall profile states                          |
+| "Show active connections"                       | List established TCP connections with process names   |
+| "Show security events"                          | Last 20 Windows Security event log entries            |
+| "Network status" / "Show IP" / "WiFi info"      | Network adapters, IP config, WiFi SSID & signal       |
+| "Ping \<host\>"                                 | Test connectivity to a host                           |
+| "List startup programs"                         | Show all apps that launch at Windows startup          |
+| "Add \<app\> to startup"                        | Register an app to run at startup                     |
+| "Remove \<app\> from startup"                   | Remove an app from startup (asks to confirm)          |
+| "List scheduled tasks"                          | Show all custom scheduled tasks and their status      |
+| "Run task \<name\>"                             | Immediately trigger a scheduled task                  |
+| "Create task \<name\>"                          | Create a one-time or recurring scheduled task         |
+| "Delete task \<name\>"                          | Remove a scheduled task (asks to confirm)             |
 
 ## Safety rules Claude follows
 
