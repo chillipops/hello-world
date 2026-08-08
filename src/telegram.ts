@@ -12,7 +12,7 @@ import {
   formatFacts, factsToSystemNote, extractFacts,
 } from './memory';
 
-const BOT_TOKEN = process.env.BOT_TOKEN ?? '8908175003:AAHeaZuiabbBrW5C2EZjF7ugtvwlsGGmq4Y';
+const BOT_TOKEN = process.env.BOT_TOKEN ?? '8908175003:AAGqp6z1ZQI9DAyFf3J9jautjEtTPXOhJ6w';
 const ollamaBase = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
 
 const bot = new Telegraf(BOT_TOKEN);
