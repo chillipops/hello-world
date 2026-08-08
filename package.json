@@ -8,11 +8,13 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "start": "ts-node src/index.ts",
-    "chat": "ts-node src/chat.ts"
+    "chat": "ts-node src/chat.ts",
+    "telegram": "ts-node src/telegram.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
-    "openai": "^7.4.0"
+    "openai": "^7.4.0",
+    "telegraf": "^4.16.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
