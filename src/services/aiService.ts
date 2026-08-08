@@ -1,18 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { Task, Priority } from '../models/task';
 
 export class AIService {
-  private client: Anthropic;
-  private model = 'claude-opus-4-7';
+  private client: OpenAI;
+  private model = 'hermes3-64k:latest';
 
-  constructor(apiKey?: string) {
-    this.client = new Anthropic({
-      apiKey: apiKey ?? process.env.ANTHROPIC_API_KEY,
+  constructor(baseUrl?: string) {
+    const ollamaBase = baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+    this.client = new OpenAI({
+      baseURL: `${ollamaBase}/v1`,
+      apiKey: 'ollama', // Ollama ignores this but the SDK requires a value
     });
   }
 
   async suggestPriority(task: Task): Promise<Priority> {
-    const response = await this.client.messages.create({
+    const response = await this.client.chat.completions.create({
       model: this.model,
       max_tokens: 100,
       messages: [
@@ -28,13 +30,13 @@ Tags: ${task.tags.join(', ') || 'None'}`,
       ],
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text.toLowerCase().trim() : 'medium';
+    const text = response.choices[0]?.message?.content?.toLowerCase().trim() ?? 'medium';
     const validPriorities = Object.values(Priority);
     return validPriorities.includes(text as Priority) ? (text as Priority) : Priority.MEDIUM;
   }
 
   async generateSubtasks(task: Task): Promise<string[]> {
-    const stream = await this.client.messages.stream({
+    const response = await this.client.chat.completions.create({
       model: this.model,
       max_tokens: 1024,
       messages: [
@@ -49,11 +51,11 @@ Tags: ${task.tags.join(', ') || 'None'}`,
       ],
     });
 
-    const message = await stream.finalMessage();
-    const text = message.content[0].type === 'text' ? message.content[0].text : '[]';
+    const text = response.choices[0]?.message?.content ?? '[]';
 
     try {
-      const parsed = JSON.parse(text);
+      const clean = text.replace(/```(?:json)?\n?/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(clean);
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       const lines = text.split('\n').filter(l => l.trim().startsWith('-') || l.trim().match(/^\d+\./));
@@ -62,11 +64,9 @@ Tags: ${task.tags.join(', ') || 'None'}`,
   }
 
   async improveDescription(task: Task): Promise<string> {
-    const response = await this.client.messages.create({
+    const response = await this.client.chat.completions.create({
       model: this.model,
       max_tokens: 512,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      thinking: { type: 'adaptive' } as any,
       messages: [
         {
           role: 'user',
@@ -80,18 +80,17 @@ Tags: ${task.tags.join(', ') || 'None'}`,
       ],
     });
 
-    const textBlock = response.content.find(block => block.type === 'text');
-    return textBlock && textBlock.type === 'text' ? textBlock.text : task.description ?? '';
+    return response.choices[0]?.message?.content ?? task.description ?? '';
   }
 
   async estimateEffort(task: Task): Promise<{ hours: number; confidence: string }> {
-    const response = await this.client.messages.create({
+    const response = await this.client.chat.completions.create({
       model: this.model,
       max_tokens: 256,
       messages: [
         {
           role: 'user',
-          content: `Estimate the effort required for this task. Return a JSON object with "hours" (number) and "confidence" (string: "low", "medium", or "high"). Return only the JSON object.
+          content: `Estimate the effort required for this task. Return a JSON object with "hours" (number) and "confidence" (string: "low", "medium", or "high"). Return only the JSON object, no markdown.
 
 Task: ${task.title}
 Description: ${task.description ?? 'No description'}
@@ -99,28 +98,12 @@ Priority: ${task.priority}
 Tags: ${task.tags.join(', ') || 'None'}`,
         },
       ],
-      // @ts-expect-error output_config is in beta
-      output_config: {
-        format: {
-          type: 'json_schema',
-          name: 'effort_estimate',
-          schema: {
-            type: 'object',
-            properties: {
-              hours: { type: 'number' },
-              confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
-            },
-            required: ['hours', 'confidence'],
-          },
-        },
-      },
     });
 
-    const firstBlock = response.content[0];
-    const text = firstBlock?.type === 'text' ? firstBlock.text : null;
+    const text = response.choices[0]?.message?.content ?? '{}';
     try {
-      if (!text) return { hours: 1, confidence: 'low' };
-      const parsed = JSON.parse(text);
+      const clean = text.replace(/```(?:json)?\n?/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(clean);
       if (typeof parsed.hours === 'number' && typeof parsed.confidence === 'string') {
         return parsed;
       }
@@ -135,15 +118,13 @@ Tags: ${task.tags.join(', ') || 'None'}`,
 
     const taskList = tasks.map((t, i) => `${i + 1}. [${t.id}] ${t.title}`).join('\n');
 
-    const stream = await this.client.messages.stream({
+    const response = await this.client.chat.completions.create({
       model: this.model,
       max_tokens: 1024,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      thinking: { type: 'adaptive' } as any,
       messages: [
         {
           role: 'user',
-          content: `Categorize these tasks into logical groups. Return a JSON object where keys are category names and values are arrays of task IDs. Return only the JSON object.
+          content: `Categorize these tasks into logical groups. Return a JSON object where keys are category names and values are arrays of task IDs. Return only the JSON object, no markdown.
 
 Tasks:
 ${taskList}`,
@@ -151,12 +132,10 @@ ${taskList}`,
       ],
     });
 
-    const message = await stream.finalMessage();
-    const textBlock = message.content.find(block => block.type === 'text');
-    const text = textBlock && textBlock.type === 'text' ? textBlock.text : '{}';
-
+    const text = response.choices[0]?.message?.content ?? '{}';
     try {
-      return JSON.parse(text);
+      const clean = text.replace(/```(?:json)?\n?/g, '').replace(/```/g, '').trim();
+      return JSON.parse(clean);
     } catch {
       return {};
     }

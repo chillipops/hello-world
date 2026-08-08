@@ -44,7 +44,7 @@ async function main() {
   console.log(formatTaskList(taskService.getAll()));
 
   const allTasks = taskService.getAll();
-  if (allTasks.length > 0 && process.env.ANTHROPIC_API_KEY) {
+  if (allTasks.length > 0) {
     console.log('\n--- Generating AI subtasks for first task ---');
     try {
       const subtasks = await aiService.generateSubtasks(allTasks[0]);
