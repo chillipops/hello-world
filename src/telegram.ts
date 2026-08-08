@@ -155,7 +155,7 @@ bot.on(message('text'), async ctx => {
   }
 });
 
-bot.launch().then(() => {
+bot.launch({ dropPendingUpdates: true }).then(() => {
   console.log(`Hermes Agent bot is running!`);
   console.log(`Connected to Ollama: ${ollamaBase}`);
   console.log(`Open Telegram and message @HermesLindsey_bot`);
